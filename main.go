@@ -2,11 +2,13 @@ package main
 
 import (
 	"WeatherByCoordinates/api"
+	"WeatherByCoordinates/repository"
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
-
 	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
+	"log"
 )
 
 const (
@@ -17,9 +19,35 @@ const (
 	dbname   = "lol1"
 )
 
+func initPostgresInstance() (*sql.DB, error) {
+	// create db conn object with params
+	db, err := sql.Open("postgres", fmt.Sprintf(
+		"host=%s user=%s dbname=%s password=%s port=%d sslmode=%s",
+		host,
+		user,
+		dbname,
+		password,
+		port,
+		"false",
+	))
+	if err != nil {
+		return nil, errors.Wrap(err, "postgres sql open connect")
+	}
+	if err = db.Ping(); err != nil {
+		return nil, errors.Wrap(err, "postgres ping error")
+	}
+
+	log.Printf("Postgres connected on %d port", port)
+	return db, nil
+}
+
 func main() {
 
-	res1, err := api.FullResult("New York")
+	db, err := initPostgresInstance()
+	repo := repository.Repository{Db: db}
+	usecase := api.UseCase{Repo: repo}
+
+	res1, err := usecase.FullResult("New York")
 	if err != nil {
 		log.Print(err)
 	}

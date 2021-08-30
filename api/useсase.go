@@ -3,11 +3,17 @@ package api
 import (
 	"WeatherByCoordinates/api/mapbox"
 	"WeatherByCoordinates/api/weatherstack"
+	"WeatherByCoordinates/repository"
 	"fmt"
 	"log"
 )
 
-func FullResult(city string) (*FullRes, error) {
+type UseCase struct {
+	Repo repository.Repository
+}
+
+func (uc *UseCase) FullResult(city string) (*FullRes, error) {
+	uc.Repo.GetData()
 	res1, err := mapbox.Geocode(city)
 	res2, err := weatherstack.Forecast(fmt.Sprintf("%v", res1.Latitude), fmt.Sprintf("%v", res1.Longitude))
 	fullData := FullRes{
