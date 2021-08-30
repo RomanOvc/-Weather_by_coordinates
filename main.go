@@ -44,6 +44,9 @@ func initPostgresInstance() (*sql.DB, error) {
 func main() {
 
 	db, err := initPostgresInstance()
+	if err != nil {
+		log.Fatal(err)
+	}
 	repo := repository.Repository{Db: db}
 	usecase := api.UseCase{Repo: repo}
 

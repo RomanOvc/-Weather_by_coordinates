@@ -9,7 +9,9 @@ import (
 )
 
 type UseCase struct {
-	Repo repository.Repository
+	Repo repository.Repository // postgresql
+	// grpc
+	// redis
 }
 
 func (uc *UseCase) FullResult(city string) (*FullRes, error) {

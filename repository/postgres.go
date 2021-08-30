@@ -62,8 +62,6 @@ values(?,?)`
 		return errors.New("table not updated")
 	}
 //	res.LastInsertId()
-
-
 	return nil
 }
 
