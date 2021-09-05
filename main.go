@@ -42,6 +42,5 @@ func weatherApi() {
 }
 
 func main() {
-
 	weatherApi()
 }
