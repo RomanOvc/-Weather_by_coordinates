@@ -1,62 +1,47 @@
 package main
 
 import (
-	"WeatherByCoordinates/api"
-	"encoding/json"
-	"fmt"
+	"WeatherByCoordinates/handlers"
+	"WeatherByCoordinates/repository"
 	"log"
+	"net/http"
 
+	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
 
 const (
 	host     = "localhost"
-	port     = 5433
-	user     = "postgres"
+	port     = "5433"
+	username = "postgres"
+	dbname   = "weatherbycoordinates"
+	sslmode  = "disable"
 	password = "acer5800"
-	dbname   = "lol1"
 )
+
+func weatherApi() {
+	db, err := repository.InitPostgresDB(repository.Config{
+		Host:     host,
+		Port:     port,
+		Username: username,
+		DBName:   dbname,
+		SSLMode:  sslmode,
+		Password: password,
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	reposa := repository.UserReqResRepository{Db: db}
+	usecase := handlers.UseCase{Repo: reposa}
+
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/weather", usecase.WeatherInfo).Methods("GET")
+	log.Fatal(http.ListenAndServe(":8000", router))
+}
 
 func main() {
 
-	res1, err := api.FullResult("New York")
-	if err != nil {
-		log.Print(err)
-	}
-
-	u, err := json.Marshal(res1)
-	if err != nil {
-		log.Print(err)
-	}
-	fmt.Println(string(u))
-	// connection string
-	// connection string
-	// psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-
-	// db, err := sql.Open("postgres", psqlconn)
-	// CheckError(err)
-
-	// defer db.Close()
-
-	// // insert
-	// // hardcoded
-	// insertStmt := `insert into students ("name", "role") values('Johna', 1)`
-	// _, e := db.Exec(insertStmt)
-	// CheckError(e)
-
-	// // dynamic
-	// insertDynStmt := `insert into students("name", "role") values($1, $2)`
-	// _, e = db.Exec(insertDynStmt, "Jaane", 2)
-	// CheckError(e)
-
-	// insertDynStmt1 := `insert into students("name", "role") values($1, $2)`
-	// _, e = db.Exec(insertDynStmt1, "Janes", 2)
-	// CheckError(e)
-
+	weatherApi()
 }
-
-// func CheckError(err error) {
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// }
