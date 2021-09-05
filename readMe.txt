@@ -21,9 +21,32 @@
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+SQL
+
+## create database ##
+CREATE DATABASE WeatherByCoordinates
+
+
+## create table UsersReqRes ##
+## таблица в которую будут собираться запросы пользователей ##
+CREATE TABLE UsersReqRes(
+    data_id serial NOT NULL PRIMARY KEY,
+    request varchar(100) UNIQUE NOT NULL,
+    City varchar(50) NOT NULL,
+    Latitude varchar(50) NOT NULL,
+    Longitude varchar(50) NOT NULL,
+    Temperature varchar(10) NOT NULL,
+    WeatherDescriptions varchar(50) NOT NULL,
+    Humidity varchar(10) NOT NULL,
+    Data varchar(50) NOT NULL
+);
+
+
+
 
 {
     name: "London"
     full_name: "то что писал пользователь"
 
 }
+
