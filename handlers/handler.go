@@ -18,7 +18,6 @@ type UseCase struct {
 func (repo *UseCase) WeatherInfo(w http.ResponseWriter, r *http.Request) {
 	var (
 		u   []byte
-		err error
 	)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -35,27 +34,25 @@ func (repo *UseCase) WeatherInfo(w http.ResponseWriter, r *http.Request) {
 		// вернуть результат
 		now := time.Now()
 
-		kek, err := api.FullResult(city)
-		lol, err := repo.Repo.CreateUsersReqRes(
+		kek, err := api.FullResult(city) // TODO need handle error
+		err = repo.Repo.CreateUsersReqRes( // TODO try gorutine
 			strings.ToLower(city),
 			kek.Region,
 			fmt.Sprintf("%f", kek.Latitude),
 			fmt.Sprintf("%f", kek.Longitude),
 			fmt.Sprint(kek.Temperature),
-			fmt.Sprint(kek.Weather_Descriptions),
+			fmt.Sprint(kek.WeatherDescriptions),
 			fmt.Sprint(kek.Humidity),
 			fmt.Sprint(now.Format("2006-01-01")))
 		if err != nil {
 			return
 		}
-		log.Print(lol)
 
 		uss, err := repo.Repo.FindByRequest(city)
 		u, err = json.Marshal(uss)
 		if err != nil {
 			return
 		}
-
 	} else {
 		u, err = json.Marshal(uss)
 		if err != nil {
@@ -66,7 +63,8 @@ func (repo *UseCase) WeatherInfo(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if err != nil {
 			log.Println(err, "Error request")
-
+			w.WriteHeader(400)
+			w.Write(nil)
 		} else {
 			w.Write(u)
 		}

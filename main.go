@@ -33,10 +33,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rep := *repository.NewReqResRepository(db)
-	usecase := *handlers.NewUseCase(&rep)
+	rep := repository.NewReqResRepository(db)
+	usecase := handlers.NewUseCase(rep)
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/weather", usecase.WeatherInfo).Methods("GET")
+	// register
+	// auth <- jwt
+	// header = jwt
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
+
+// Изучить jwt
+// Реализовать аутентификацию с помощью jwt
+// унифицировать пользователя по jwt и указать валедльца запроса в бд
+// Claims, EXP, key
