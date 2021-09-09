@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+/// переписать initpostgreDB
 type Config struct {
 	Host     string
 	Port     string

@@ -19,7 +19,7 @@ const (
 	password = "acer5800"
 )
 
-func weatherApi() {
+func main() {
 	db, err := repository.InitPostgresDB(repository.Config{
 		Host:     host,
 		Port:     port,
@@ -33,14 +33,10 @@ func weatherApi() {
 		log.Fatal(err)
 	}
 
-	reposa := repository.UserReqResRepository{Db: db}
-	usecase := handlers.UseCase{Repo: reposa}
+	rep := *repository.NewReqResRepository(db)
+	usecase := *handlers.NewUseCase(&rep)
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/weather", usecase.WeatherInfo).Methods("GET")
 	log.Fatal(http.ListenAndServe(":8000", router))
-}
-
-func main() {
-	weatherApi()
 }
