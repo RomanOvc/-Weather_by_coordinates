@@ -2,8 +2,8 @@ package repository
 
 import (
 	"database/sql"
+
 	"github.com/pkg/errors"
-	"log"
 )
 
 //nтут нормально
@@ -24,30 +24,19 @@ type UserReqRes struct {
 	Data                string `json:"data"`
 }
 
-func (r *UserReqResRepository) FindByRequest(req string) (*[]UserReqRes, error) {
-	rows, err := r.Db.Query("SELECT * FROM usersreqres where request = $1", req) // FIXME QueryRow!
+func (r *UserReqResRepository) FindByRequest(req string) (*UserReqRes, error) {
+	rows := r.Db.QueryRow("SELECT * FROM usersreqres where request = $1", req)
+	var us UserReqRes
+	err := rows.Scan(&us.Data_id, &us.Request, &us.City, &us.Latitude, &us.Longitude,
+		&us.Temperature, &us.Weatherdescriptions, &us.Humidity, &us.Data)
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	defer rows.Close()
-
-	var userReqRes []UserReqRes
-	for rows.Next() {
-		var us UserReqRes
-
-		err := rows.Scan(&us.Data_id, &us.Request, &us.City, &us.Latitude, &us.Longitude,
-			&us.Temperature, &us.Weatherdescriptions, &us.Humidity, &us.Data)
-		if err != nil {
-			return nil, err
-		}
-		userReqRes = append(userReqRes, us)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return &userReqRes, nil
+	return &us, err
 
 }
 
@@ -78,12 +67,11 @@ func (r *UserReqResRepository) AllIn() (*[]UserReqRes, error) {
 
 }
 
-// что должен возвращать метод create
 func (r *UserReqResRepository) CreateUsersReqRes(request, city, latitude, longitude, temperature, weatherdescriptions, humidity, data string) error {
 	sqlStatement := `INSERT INTO usersreqres (request, city, latitude, longitude, temperature, weatherdescriptions, humidity, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`
 	res, err := r.Db.Exec(sqlStatement, request, city, latitude, longitude, temperature, weatherdescriptions, humidity, data)
 	if err != nil {
-		log.Fatal(err) // FIXME return "", err
+		return err
 	}
 	setedRows, err := res.RowsAffected()
 	if err != nil {
@@ -97,29 +85,17 @@ func (r *UserReqResRepository) CreateUsersReqRes(request, city, latitude, longit
 	return err
 }
 
+// метод, который выведит количесвто записей в таблице, что бы записать его в метод FullResultвозращающий json
+func (r *UserReqResRepository) NumberOfRecords() (int, error) {
+	var counter int
+	err := r.Db.QueryRow("SELECT count(*) FROM usersreqres").Scan(&counter)
+	if err != nil {
+		return 0, errors.Wrap(err, "записей нет")
+	}
+	return counter, err
+}
+
 // NewReqResRepository constructor
 func NewReqResRepository(Db *sql.DB) *UserReqResRepository {
 	return &UserReqResRepository{Db: Db}
 }
-
-//tx, err := db.Begin()
-//if err != nil {
-//return errors.Wrap(err, "[UpdateUserTable] Error #3")
-//}
-//defer func() {
-//	if err != nil {
-//		tx.Rollback()
-//	} else {
-//		tx.Commit()
-//	}
-//}()
-//stmt, err := tx.Prepare("INSERT INTO users (user_id, name, has_won, has_lost, opponent_id, points, count, rank) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-//if err != nil {
-//return errors.Wrap(err, "[UpdateUserTable] Error #6")
-//}
-//for i := range data {
-//_, err = stmt.Exec(data[i].user_id, data[i].name, data[i].has_won, data[i].has_lost, data[i].opponent_id, data[i].points, data[i].count, data[i].rank)
-//if err != nil {
-//return errors.Wrap(err, "[UpdateUserTable] Error #7")
-//}
-//}

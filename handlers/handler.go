@@ -1,14 +1,11 @@
 package handlers
 
 import (
-	"WeatherByCoordinates/api"
 	"WeatherByCoordinates/repository"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type UseCase struct {
@@ -17,7 +14,7 @@ type UseCase struct {
 
 func (repo *UseCase) WeatherInfo(w http.ResponseWriter, r *http.Request) {
 	var (
-		u   []byte
+		u []byte
 	)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -28,31 +25,18 @@ func (repo *UseCase) WeatherInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(*uss) == 0 {
-		// дернуть api
-		// записать в бд
-		// вернуть результат
-		now := time.Now()
-
-		kek, err := api.FullResult(city) // TODO need handle error
-		err = repo.Repo.CreateUsersReqRes( // TODO try gorutine
-			strings.ToLower(city),
-			kek.Region,
-			fmt.Sprintf("%f", kek.Latitude),
-			fmt.Sprintf("%f", kek.Longitude),
-			fmt.Sprint(kek.Temperature),
-			fmt.Sprint(kek.WeatherDescriptions),
-			fmt.Sprint(kek.Humidity),
-			fmt.Sprint(now.Format("2006-01-01")))
+	if uss.City == "" {
+		fullResult, err := repo.FullResult(city) // TODO need handle error
+		if err != nil {
+			return
+		}
+		u, err = json.Marshal(fullResult)
 		if err != nil {
 			return
 		}
 
-		uss, err := repo.Repo.FindByRequest(city)
-		u, err = json.Marshal(uss)
-		if err != nil {
-			return
-		}
+		go repo.AddData(fullResult)
+
 	} else {
 		u, err = json.Marshal(uss)
 		if err != nil {
@@ -69,11 +53,9 @@ func (repo *UseCase) WeatherInfo(w http.ResponseWriter, r *http.Request) {
 			w.Write(u)
 		}
 	}()
-
 	return
 }
 
-//dependency injections
 func NewUseCase(Repo *repository.UserReqResRepository) *UseCase {
 	return &UseCase{Repo: Repo}
 }

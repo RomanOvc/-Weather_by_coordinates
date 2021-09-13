@@ -9,9 +9,9 @@ import (
 )
 
 type Current struct {
-	Temperature         int
-	WeatherDescriptions []string
-	Humidity            int
+	Temperature          int
+	Weather_Descriptions []string
+	Humidity             int
 }
 type Location struct {
 	Region string
@@ -24,9 +24,9 @@ type ForecastR struct {
 
 type ForecastResp struct {
 	Region               string   `json:"city"`
-	Temperature         int      `json:"temperature"`
-	WeatherDescriptions []string `json:"weather_description"`
-	Humidity            int      `json:"humidity"`
+	Temperature          int      `json:"temperature"`
+	Weather_Descriptions []string `json:"weather_description"`
+	Humidity             int      `json:"humidity"`
 }
 
 // http://api.weatherstack.com/current?access_key='my_access_key'&query=latitude,longitude
@@ -54,6 +54,6 @@ func Forecast(latitude, longitude string) (*ForecastResp, error) {
 		return nil, errors.Wrap(err, "ERRor request")
 	}
 
-	result := ForecastResp{Region: data.Location.Region, Temperature: data.Current.Temperature, Humidity: data.Current.Humidity, WeatherDescriptions: data.Current.WeatherDescriptions}
+	result := ForecastResp{Region: data.Location.Region, Temperature: data.Current.Temperature, Humidity: data.Current.Humidity, Weather_Descriptions: data.Current.Weather_Descriptions}
 	return &result, nil
 }
