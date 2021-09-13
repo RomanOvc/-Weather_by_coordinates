@@ -8,22 +8,19 @@
     a. Получает координаты из api Mapbox (latitude,longitude)
     b. Возвращает temperature(температуру), weather_descriptions(описание погоды), Humidity(влажность)
 
-
-Собираем в Json:
+3. Собираем в Json:
     {
-        "city":"London",
-        "latitude":"51.517",
-        "longitude":"-0.106"
-        "temperature":"13"
-        "weather_descriptions":["sunny"]
-        "Humidity":13%
-        "data":2021:08:21 10:50
+        "data_id":"1"
+        "request":"london"
+	    "city":"London"
+	    "latitude":"51.507321899999994"
+	    "longitude":"-0.12764739999999997"
+	    "temperateure":"13"
+	    "weather_descriptions":"[sunny]"
+	    "humidity":"13"
+	    "data":"2021-09-13"
     }
-
+4. Если данных нет в базе, то получаем запрос от api и записываем данные в бд. Если есть такой запрос в базе выдать ответ.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-{
-    name: "London"
-    full_name: "то что писал пользователь"
 
-}
