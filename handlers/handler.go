@@ -59,7 +59,6 @@ func (repo *UseCase) WeatherInfo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	defer func() {
 		if err != nil {
 			log.Println(err, "Error request")
 			w.WriteHeader(400)
@@ -67,11 +66,10 @@ func (repo *UseCase) WeatherInfo(w http.ResponseWriter, r *http.Request) {
 		} else {
 			w.Write(u)
 		}
-	}()
 	return
 }
 
-func (repo *UseCase) ReuestsByUserIdHandler(w http.ResponseWriter, r *http.Request) {
+func (repo *UseCase) RequestsByUserIdHandler(w http.ResponseWriter, r *http.Request) {
 	var (
 		u []byte
 	)
@@ -88,12 +86,12 @@ func (repo *UseCase) ReuestsByUserIdHandler(w http.ResponseWriter, r *http.Reque
 		user_id = fmt.Sprint(item)
 
 	}
-	fullResult, err := repo.Repo.FindByIdUser(user_id) // TODO need handle error
+	result, err := repo.Repo.FindByIdUser(user_id) // TODO need handle error
 	if err != nil {
 		return
 	}
 
-	u, err = json.Marshal(fullResult)
+	u, err = json.Marshal(result)
 	if err != nil {
 		return
 	}
@@ -113,3 +111,4 @@ func (repo *UseCase) ReuestsByUserIdHandler(w http.ResponseWriter, r *http.Reque
 func NewUseCase(Repo *repository.UserReqResRepository) *UseCase {
 	return &UseCase{Repo: Repo}
 }
+

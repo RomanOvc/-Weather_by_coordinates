@@ -24,3 +24,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+Redis.
+Реализовать хранение access токена в редисе и его проверку в мидлваре.
+
+username -> jwtToken
+(ex +) exRedis = exToken
+
+login -> set token to redis
+middleware -> validate -> get token.username from redis  tokenRedis == Token

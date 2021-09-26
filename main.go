@@ -44,10 +44,11 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 
 	router.Handle("/weather", handlers.IsAuthorized(usecase.WeatherInfo)).Methods("GET")
-	router.Handle("/request_by_id", handlers.IsAuthorized(usecase.ReuestsByUserIdHandler)).Methods("GET")
+	router.Handle("/request_by_id", handlers.IsAuthorized(usecase.RequestsByUserIdHandler)).Methods("GET")
 
 	router.HandleFunc("/create_user", auth.CreateUserHandler).Methods("POST")
 	router.HandleFunc("/login", auth.LoginHandler).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
+

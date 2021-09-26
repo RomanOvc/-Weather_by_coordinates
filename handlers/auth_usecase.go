@@ -24,29 +24,29 @@ func (authR *AuthHandler) CheckLogin(u *auth.User) (*Token, error) {
 	}
 	if user.Username != u.Username || user.Password != u.Password {
 		fmt.Println("NOT CORRECT")
-		err := "error"
-		return nil, errors.Errorf(err)
+		err := "error" // TODO rename
+		return nil, errors.Errorf(err) // TODO wrap
 	}
 
-	valideToken, err := GenerateJWT(user)
-	// fmt.Println(valideToken)
+	validToken, err := generateJWT(user)
+	// fmt.Println(validToken)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	return &Token{valideToken}, err
+	return &Token{validToken}, err
 
 }
 
 // генерация токена
-func GenerateJWT(u *auth.User) (string, error) {
+func generateJWT(u *auth.User) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["authorized"] = true
 	claims["user_id"] = u.User_id
 	claims["username"] = u.Username
-	claims["password"] = u.Password
+	claims["password"] = u.Password // TODO ???
 
 	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
 
