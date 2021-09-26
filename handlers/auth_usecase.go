@@ -17,7 +17,7 @@ type Token struct {
 	Token string `json:"token"`
 }
 
-func (authR *AuthHandler) CheckLogin(u *auth.User) (*Token, error) {
+func (authR *AuthHandler) CheckToken(u *auth.User) (*Token, error) {
 	user, err := authR.AuthR.GetUser(u.Username)
 	if err != nil {
 		return nil, err

@@ -53,10 +53,10 @@ func (r *UserReqResRepository) FindByRequest(req string) (*UserReqRes, error) {
 
 }
 
-func (r *UserReqResRepository) AllIn() (*[]UserReqRes, error) {
+func (r *UserReqResRepository) AllUserRequesResponse() (*[]UserReqRes, error) {
 	rows, err := r.Db.Query("SELECT * FROM usersreqres")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "no data")
 	}
 
 	defer rows.Close()
@@ -68,12 +68,12 @@ func (r *UserReqResRepository) AllIn() (*[]UserReqRes, error) {
 		err := rows.Scan(&us.Data_id, &us.Request, &us.City, &us.Latitude, &us.Longitude,
 			&us.Temperature, &us.Weatherdescriptions, &us.Humidity, &us.User_id, &us.Data)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "no data row")
 		}
 		userReqRes = append(userReqRes, us)
 	}
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error row")
 	}
 
 	return &userReqRes, nil
@@ -81,10 +81,11 @@ func (r *UserReqResRepository) AllIn() (*[]UserReqRes, error) {
 }
 
 func (r *UserReqResRepository) CreateUsersReqRes(request, city, latitude, longitude, temperature, weatherdescriptions, humidity, data string, user_id int) error {
-	sqlStatement := `INSERT INTO usersreqres (request, city, latitude, longitude, temperature, weatherdescriptions, humidity,user_id, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`
-	res, err := r.Db.Exec(sqlStatement, request, city, latitude, longitude, temperature, weatherdescriptions, humidity, user_id, data)
+
+	res, err := r.Db.Exec("INSERT INTO usersreqres (request, city, latitude, longitude, temperature, weatherdescriptions, humidity,user_id, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);",
+		request, city, latitude, longitude, temperature, weatherdescriptions, humidity, user_id, data)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "no add")
 	}
 	setedRows, err := res.RowsAffected()
 	if err != nil {
@@ -110,7 +111,7 @@ func (r *UserReqResRepository) NumberOfRecords() (int, error) {
 func (r *UserReqResRepository) FindByIdUser(id string) (*[]FindByIdType, error) {
 	rows, err := r.Db.Query("SELECT request,city,latitude,longitude,temperature, weatherdescriptions,humidity,user_id,data FROM usersreqres where user_id = $1", id)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "no user_id")
 	}
 	defer rows.Close()
 	var findByIdType []FindByIdType
@@ -119,13 +120,13 @@ func (r *UserReqResRepository) FindByIdUser(id string) (*[]FindByIdType, error) 
 
 		err := rows.Scan(&us.Request, &us.City, &us.Latitude, &us.Longitude, &us.Temperature, &us.Weatherdescriptions, &us.Humidity, &us.User_id, &us.Data)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "no scan data")
 		}
 		findByIdType = append(findByIdType, us)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "no rows")
 	}
 	return &findByIdType, nil
 }
@@ -134,7 +135,7 @@ func (r *UserReqResRepository) GetUser(username string) (*auth.User, error) {
 	var user auth.User
 	err := r.Db.QueryRow("select user_id, username, password from users where username = $1", username).Scan(&user.User_id, &user.Username, &user.Password)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error username")
 	}
 	return &user, err
 }

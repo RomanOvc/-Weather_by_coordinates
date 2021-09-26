@@ -5,7 +5,6 @@ import (
 	"WeatherByCoordinates/api/weatherstack"
 	"WeatherByCoordinates/repository"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -58,7 +57,7 @@ func (repo *UseCase) AddData(structData *repository.UserReqRes) (string, error) 
 		structData.User_id,
 	)
 	if err != nil {
-		log.Fatal(err)
+		return "", errors.Wrap(err, "error datas")
 		// return "", err
 	}
 	return "ok", err

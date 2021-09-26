@@ -26,33 +26,41 @@ func NewAuthHandler(AuthR *auth.AuthRepository) *AuthHandler {
 //  	"created_on":"2021-06-06"
 //  }
 func (authR *AuthHandler) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
-	var user *auth.User
+	var user auth.User
 	json.NewDecoder(r.Body).Decode(&user)
 
-	add, err := authR.AuthR.CreateUser(*user)
+	defer func() {
+		if err != nil {
+			w.WriteHeader(400)
+			bytes, _ := json.Marshal("not registre: " + err.Error())
+			w.Write(bytes)
+			return
+		}
+	}()
+	userId, err := authR.AuthR.CreateUser(user)
 	if err != nil {
-		return //TODO как-то вернуть сообщение что такой юзер существует
+		return ///TODO как-то вернуть сообщение что такой юзер существует
 	}
-	log.Print(add)
+	log.Print(userId)
+	bytes, err := json.Marshal(userId)
+	if err != nil {
+		return
+	}
+	w.Write(bytes)
 }
 
 func (authR *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var (
-		u []byte
+		u   []byte
+		err error
 	)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
-	var user *auth.User
+	var user auth.User
 	json.NewDecoder(r.Body).Decode(&user)
-
-	usse, err := authR.CheckLogin(user)
-	u, err = json.Marshal(usse)
-	if err != nil {
-		return
-	}
-
 	defer func() {
 		if err != nil {
 			log.Println(err, "Error request")
@@ -62,11 +70,17 @@ func (authR *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 			w.Write(u)
 		}
 	}()
+	token, err := authR.CheckToken(&user)
+	u, err = json.Marshal(token)
+	if err != nil {
+		return
+	}
+
 	return
 }
 
 // не знаю куда засунуть middleware
-func IsAuthorized(endpoint func(http.ResponseWriter, *http.Request)) http.Handler {
+func IsAuthorized(next http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Connection", "close")
@@ -79,18 +93,23 @@ func IsAuthorized(endpoint func(http.ResponseWriter, *http.Request)) http.Handle
 				}
 				return mySigningKey, nil
 			})
-
 			if err != nil {
-				w.WriteHeader(http.StatusForbidden)
-				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(400)
+				w.Write(nil)
 				return
 			}
 
 			if token.Valid {
-				endpoint(w, r)
+				next.ServeHTTP(w, r)
+			} else {
+				w.WriteHeader(401)
+				w.Write(nil)
+				return
 			}
 
 		} else {
+			w.WriteHeader(400)
+			w.Write(nil)
 			fmt.Fprintf(w, "Not Authorized")
 		}
 	})
