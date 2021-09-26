@@ -1,6 +1,7 @@
 package main
 
 import (
+	"WeatherByCoordinates/auth"
 	"WeatherByCoordinates/handlers"
 	"WeatherByCoordinates/repository"
 	"log"
@@ -9,6 +10,8 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
+
+// var signingKey = []byte("key")
 
 const (
 	host     = "localhost"
@@ -36,15 +39,15 @@ func main() {
 	rep := repository.NewReqResRepository(db)
 	usecase := handlers.NewUseCase(rep)
 
+	repAuth := auth.NewAuthRepository(db)
+	auth := handlers.NewAuthHandler(repAuth)
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/weather", usecase.WeatherInfo).Methods("GET")
-	// register
-	// auth <- jwt
-	// header = jwt
+
+	router.Handle("/weather", handlers.IsAuthorized(usecase.WeatherInfo)).Methods("GET")
+	router.Handle("/request_by_id", handlers.IsAuthorized(usecase.ReuestsByUserIdHandler)).Methods("GET")
+
+	router.HandleFunc("/create_user", auth.CreateUserHandler).Methods("POST")
+	router.HandleFunc("/login", auth.LoginHandler).Methods("POST")
+
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
-
-// Изучить jwt
-// Реализовать аутентификацию с помощью jwt
-// унифицировать пользователя по jwt и указать валедльца запроса в бд
-// Claims, EXP, key

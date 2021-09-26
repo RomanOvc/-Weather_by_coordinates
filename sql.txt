@@ -1,0 +1,22 @@
+CREATE DATABASE weatherbycoordinates;
+
+CREATE TABLE UsersReqRes(
+    data_id serial NOT NULL PRIMARY KEY,
+    request varchar(100) UNIQUE NOT NULL,
+    City varchar(50) NOT NULL,
+    Latitude varchar(50) NOT NULL,
+    Longitude varchar(50) NOT NULL,
+    Temperature varchar(10) NOT NULL,
+    WeatherDescriptions varchar(50) NOT NULL,
+    Humidity varchar(10) NOT NULL,
+    user_id int not null ,
+    Data varchar(50) NOT NULL,
+    foreign key (user_id) references users (user_id) on delete cascade
+);
+
+CREATE TABLE users(
+    user_id serial PRIMARY KEY,
+    username varchar(50) UNIQUE not null,
+    password varchar(50) not null
+    created_on TIMESTAMP NOT null
+);

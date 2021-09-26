@@ -5,13 +5,15 @@ import (
 	"WeatherByCoordinates/api/weatherstack"
 	"WeatherByCoordinates/repository"
 	"fmt"
+	"log"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 )
 
-func (repo *UseCase) FullResult(city string) (*repository.UserReqRes, error) {
+func (repo *UseCase) FullResult(city, user_id string) (*repository.UserReqRes, error) {
 	now := time.Now()
 	res1, err := mapbox.Geocode(city)
 	if err != nil {
@@ -22,6 +24,7 @@ func (repo *UseCase) FullResult(city string) (*repository.UserReqRes, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "записей нет")
 	}
+	intVar, _ := strconv.Atoi(user_id)
 	fullData := repository.UserReqRes{
 		Data_id:             fmt.Sprint(counter + 1),
 		Request:             strings.ToLower(city),
@@ -31,6 +34,7 @@ func (repo *UseCase) FullResult(city string) (*repository.UserReqRes, error) {
 		Temperature:         fmt.Sprint(res2.Temperature),
 		Weatherdescriptions: fmt.Sprint(res2.Weather_Descriptions),
 		Humidity:            fmt.Sprint(res2.Humidity),
+		User_id:             intVar,
 		Data:                fmt.Sprintf("%d-%d-%d", now.Year(), now.Month(), now.Day()),
 	}
 
@@ -50,9 +54,12 @@ func (repo *UseCase) AddData(structData *repository.UserReqRes) (string, error) 
 		structData.Temperature,
 		structData.Weatherdescriptions,
 		structData.Humidity,
-		structData.Data)
+		structData.Data,
+		structData.User_id,
+	)
 	if err != nil {
-		return "", err
+		log.Fatal(err)
+		// return "", err
 	}
 	return "ok", err
 

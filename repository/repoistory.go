@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"WeatherByCoordinates/auth"
 	"database/sql"
 
 	"github.com/pkg/errors"
@@ -21,6 +22,18 @@ type UserReqRes struct {
 	Temperature         string `json:"temperateure"`
 	Weatherdescriptions string `json:"weather_descriptions"`
 	Humidity            string `json:"humidity"`
+	User_id             int    `json:"user_id"`
+	Data                string `json:"data"`
+}
+type FindByIdType struct {
+	Request             string `json:"request"`
+	City                string `json:"city"`
+	Latitude            string `json:"latitude"`
+	Longitude           string `json:"longitude"`
+	Temperature         string `json:"temperateure"`
+	Weatherdescriptions string `json:"weather_descriptions"`
+	Humidity            string `json:"humidity"`
+	User_id             string `json:"user_id"`
 	Data                string `json:"data"`
 }
 
@@ -28,7 +41,7 @@ func (r *UserReqResRepository) FindByRequest(req string) (*UserReqRes, error) {
 	rows := r.Db.QueryRow("SELECT * FROM usersreqres where request = $1", req)
 	var us UserReqRes
 	err := rows.Scan(&us.Data_id, &us.Request, &us.City, &us.Latitude, &us.Longitude,
-		&us.Temperature, &us.Weatherdescriptions, &us.Humidity, &us.Data)
+		&us.Temperature, &us.Weatherdescriptions, &us.Humidity, &us.User_id, &us.Data)
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
@@ -53,7 +66,7 @@ func (r *UserReqResRepository) AllIn() (*[]UserReqRes, error) {
 		var us UserReqRes
 
 		err := rows.Scan(&us.Data_id, &us.Request, &us.City, &us.Latitude, &us.Longitude,
-			&us.Temperature, &us.Weatherdescriptions, &us.Humidity, &us.Data)
+			&us.Temperature, &us.Weatherdescriptions, &us.Humidity, &us.User_id, &us.Data)
 		if err != nil {
 			return nil, err
 		}
@@ -67,9 +80,9 @@ func (r *UserReqResRepository) AllIn() (*[]UserReqRes, error) {
 
 }
 
-func (r *UserReqResRepository) CreateUsersReqRes(request, city, latitude, longitude, temperature, weatherdescriptions, humidity, data string) error {
-	sqlStatement := `INSERT INTO usersreqres (request, city, latitude, longitude, temperature, weatherdescriptions, humidity, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`
-	res, err := r.Db.Exec(sqlStatement, request, city, latitude, longitude, temperature, weatherdescriptions, humidity, data)
+func (r *UserReqResRepository) CreateUsersReqRes(request, city, latitude, longitude, temperature, weatherdescriptions, humidity, data string, user_id int) error {
+	sqlStatement := `INSERT INTO usersreqres (request, city, latitude, longitude, temperature, weatherdescriptions, humidity,user_id, data) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`
+	res, err := r.Db.Exec(sqlStatement, request, city, latitude, longitude, temperature, weatherdescriptions, humidity, user_id, data)
 	if err != nil {
 		return err
 	}
@@ -85,7 +98,6 @@ func (r *UserReqResRepository) CreateUsersReqRes(request, city, latitude, longit
 	return err
 }
 
-// метод, который выведит количесвто записей в таблице, что бы записать его в метод FullResultвозращающий json
 func (r *UserReqResRepository) NumberOfRecords() (int, error) {
 	var counter int
 	err := r.Db.QueryRow("SELECT count(*) FROM usersreqres").Scan(&counter)
@@ -95,7 +107,38 @@ func (r *UserReqResRepository) NumberOfRecords() (int, error) {
 	return counter, err
 }
 
-// NewReqResRepository constructor
+func (r *UserReqResRepository) FindByIdUser(id string) (*[]FindByIdType, error) {
+	rows, err := r.Db.Query("SELECT request,city,latitude,longitude,temperature, weatherdescriptions,humidity,user_id,data FROM usersreqres where user_id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var findByIdType []FindByIdType
+	for rows.Next() {
+		var us FindByIdType
+
+		err := rows.Scan(&us.Request, &us.City, &us.Latitude, &us.Longitude, &us.Temperature, &us.Weatherdescriptions, &us.Humidity, &us.User_id, &us.Data)
+		if err != nil {
+			return nil, err
+		}
+		findByIdType = append(findByIdType, us)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return &findByIdType, nil
+}
+
+func (r *UserReqResRepository) GetUser(username string) (*auth.User, error) {
+	var user auth.User
+	err := r.Db.QueryRow("select user_id, username, password from users where username = $1", username).Scan(&user.User_id, &user.Username, &user.Password)
+	if err != nil {
+		return nil, err
+	}
+	return &user, err
+}
+
 func NewReqResRepository(Db *sql.DB) *UserReqResRepository {
 	return &UserReqResRepository{Db: Db}
 }
