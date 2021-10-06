@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
@@ -20,6 +21,12 @@ const (
 	dbname   = "weatherbycoordinates"
 	sslmode  = "disable"
 	password = "acer5800"
+)
+
+const (
+	addrRedis = "localhost:6379"
+	passwordR = ""
+	dbR       = 0
 )
 
 func main() {
@@ -36,15 +43,24 @@ func main() {
 		log.Fatal(err)
 	}
 
+	redisInit := redis.NewClient(&redis.Options{
+		Addr:     addrRedis,
+		Password: passwordR,
+		DB:       dbR,
+	})
+
+	redisClient := repository.NewRedisRepository(redisInit)
+
 	rep := repository.NewReqResRepository(db)
 	usecase := handlers.NewUseCase(rep)
 
 	repAuth := auth.NewAuthRepository(db)
-	auth := handlers.NewAuthHandler(repAuth)
+	auth := handlers.NewAuthHandler(repAuth, redisClient)
+
 	router := mux.NewRouter().StrictSlash(true)
 
-	router.Handle("/weather", handlers.IsAuthorized(usecase.WeatherInfo)).Methods("GET")
-	router.Handle("/request_by_id", handlers.IsAuthorized(usecase.ReuestsByUserIdHandler)).Methods("GET")
+	router.Handle("/weather", auth.IsAuthorized(usecase.WeatherInfo)).Methods("GET")
+	router.Handle("/request_by_id", auth.IsAuthorized(usecase.ReuestsByUserIdHandler)).Methods("GET")
 
 	router.HandleFunc("/create_user", auth.CreateUserHandler).Methods("POST")
 	router.HandleFunc("/login", auth.LoginHandler).Methods("POST")

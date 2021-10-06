@@ -20,8 +20,9 @@ type Token struct {
 func (authR *AuthHandler) CheckToken(u *auth.User) (*Token, error) {
 	user, err := authR.AuthR.GetUser(u.Username)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "err")
 	}
+
 	if user.Username != u.Username || user.Password != u.Password {
 		fmt.Println("NOT CORRECT")
 		err := "error"
@@ -29,7 +30,7 @@ func (authR *AuthHandler) CheckToken(u *auth.User) (*Token, error) {
 	}
 
 	valideToken, err := GenerateJWT(user)
-	// fmt.Println(valideToken)
+
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -46,9 +47,8 @@ func GenerateJWT(u *auth.User) (string, error) {
 	claims["authorized"] = true
 	claims["user_id"] = u.User_id
 	claims["username"] = u.Username
-	claims["password"] = u.Password
 
-	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
+	claims["exp"] = time.Now().Add(time.Hour * 2).Unix()
 
 	tokenString, err := token.SignedString(mySigningKey)
 	if err != nil {

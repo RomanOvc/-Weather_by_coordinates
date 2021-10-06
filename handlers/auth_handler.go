@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"WeatherByCoordinates/auth"
+	"WeatherByCoordinates/repository"
 	"encoding/json"
 	"fmt"
 
@@ -12,11 +13,12 @@ import (
 )
 
 type AuthHandler struct {
-	AuthR *auth.AuthRepository
+	AuthR       *auth.AuthRepository
+	RedissRepos *repository.RedisRepos
 }
 
-func NewAuthHandler(AuthR *auth.AuthRepository) *AuthHandler {
-	return &AuthHandler{AuthR: AuthR}
+func NewAuthHandler(AuthR *auth.AuthRepository, RedissRepos *repository.RedisRepos) *AuthHandler {
+	return &AuthHandler{AuthR: AuthR, RedissRepos: RedissRepos}
 }
 
 // ожидает json следующего вида
@@ -41,9 +43,7 @@ func (authR *AuthHandler) CreateUserHandler(w http.ResponseWriter, r *http.Reque
 		}
 	}()
 	userId, err := authR.AuthR.CreateUser(user)
-	if err != nil {
-		return ///TODO как-то вернуть сообщение что такой юзер существует
-	}
+
 	log.Print(userId)
 	bytes, err := json.Marshal(userId)
 	if err != nil {
@@ -70,24 +70,34 @@ func (authR *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 			w.Write(u)
 		}
 	}()
+
 	token, err := authR.CheckToken(&user)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	u, err = json.Marshal(token)
 	if err != nil {
 		return
 	}
-
+	addToRedisUserToken, err := authR.RedissRepos.AddTokenToRedis(user.Username, token.Token)
+	if err != nil {
+		return
+	}
+	log.Println(addToRedisUserToken)
 	return
+
 }
 
-// не знаю куда засунуть middleware
-func IsAuthorized(next http.HandlerFunc) http.Handler {
+func (authR *AuthHandler) IsAuthorized(next http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Connection", "close")
 		defer r.Body.Close()
 
-		if r.Header["Token"] != nil {
-			token, err := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
+		var tokenHeader = r.Header["Token"]
+		if tokenHeader != nil {
+			token, err := jwt.Parse(tokenHeader[0], func(token *jwt.Token) (interface{}, error) {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, fmt.Errorf("There was an error")
 				}
@@ -99,7 +109,21 @@ func IsAuthorized(next http.HandlerFunc) http.Handler {
 				return
 			}
 
-			if token.Valid {
+			// log.Println(token)
+			userToken := token.Claims.(jwt.MapClaims)["username"]
+
+			//TODO пересмотреть sprintf
+			redisToken, err := authR.RedissRepos.UserRedisToken(fmt.Sprintf("%v", userToken))
+
+			if err != nil {
+				w.WriteHeader(401)
+				w.Write(nil)
+				return
+			}
+			tokenRedisUnmarshal := repository.RedisToken{}
+			json.Unmarshal([]byte(redisToken), &tokenRedisUnmarshal)
+
+			if token.Valid && tokenRedisUnmarshal.RToken == tokenHeader[0] {
 				next.ServeHTTP(w, r)
 			} else {
 				w.WriteHeader(401)

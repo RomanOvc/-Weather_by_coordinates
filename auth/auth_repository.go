@@ -41,10 +41,18 @@ func (ar *AuthRepository) CreateUser(user User) (int, error) {
 }
 
 func (ar *AuthRepository) GetUser(username string) (*User, error) {
+
 	var user User
-	err := ar.Db.QueryRow("select user_id, username, password from users where username = $1", username).Scan(&user.User_id, &user.Username, &user.Password)
-	if err != nil {
-		return nil, errors.Wrap(err, "not username")
+	rows := ar.Db.QueryRow("select user_id, username, password from users where username = $1", username)
+
+	err := rows.Scan(&user.User_id, &user.Username, &user.Password)
+	if err = rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "user_id not valid!")
 	}
+
+	if user.User_id == "" {
+		return nil, errors.New("нет такого пользователя")
+	}
+
 	return &user, err
 }
